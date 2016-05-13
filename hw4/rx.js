@@ -182,6 +182,20 @@ Stream.prototype.latest = function() {
     return s;
 };
 
+// unique
+Stream.prototype.unique = function(f) {
+    var s = new Stream();
+    s.hashset = {};
+    this.subscribe(function(val){
+        var id = f(val);
+        if (!s.hashset[id]){
+            s.hashset[id] = true;
+            s._push(val);
+        }
+    });
+    return s;
+};
+
 var FIRE911URL = "https://data.seattle.gov/views/kzjm-xkqj/rows.json?accessType=WEBSITE&method=getByIds&asHashes=true&start=0&length=10&meta=false&$order=:id";
 
 window.WIKICALLBACKS = {}
@@ -235,21 +249,46 @@ $(function() {
         mousePositionSpan.text("X:" + e.pageX + " Y: " + e.pageY);
     });
 
+    // Old implementation
     // Url
-    var urlStream = new Stream();
-    urlStream.url(FIRE911URL);
-    var addressStream = urlStream.flatten().map(function(parsedJson){
-        // Extract only the address
-        return parsedJson["3479077"]
+    // var urlStream = new Stream();
+    // urlStream.url(FIRE911URL);
+    // var addressStream = urlStream.flatten().map(function(parsedJson){
+    //     // Extract only the address
+    //     return parsedJson["3479077"]
+    // });
+    // addressStream.subscribe(function(address){
+    //     $("#fireevents").append($("<li></li>").text(address));
+    // });
+
+    // New implementation (P3Q1)
+    var minuteStream = new Stream();
+    minuteStream.timer(5000); // Make 10 seconds for testing
+    minuteStream.subscribe(function (currentTime){
+        // Clear the list
+        $("#fireevents").empty();
+
+        // Issue a web request
+        var urlStream = new Stream();
+        urlStream.url(FIRE911URL);
+        var fireStream = urlStream.flatten().unique(function(element){
+            // Extract unique id's
+            return element.id;
+        }).map(function(parsedJson){
+            // Extract only the address
+            return parsedJson["3479077"];
+        });
+        fireStream.subscribe(function(address){
+            $("#fireevents").append($("<li></li>").text(address));
+        });
     });
-    addressStream.subscribe(function(address){
-        $("#fireevents").append($("<li></li>").text(address));
-    });
+    // Artificially start the first iteration
+    minuteStream._push(new Date());
 
     // Wikipedia throttled search
     var wikipediaInputText = document.getElementById("wikipediasearch");
     var textChangedStream = new Stream();
-    textChangedStream.dom(wikipediaInputText, "keyup");
+    textChangedStream.dom(wikipediaInputText, "input");
     var throttledTextChangedStream = textChangedStream.throttle(wikipediaThrottle);
 
     // This will be a stream of streams - we only want latest from there
