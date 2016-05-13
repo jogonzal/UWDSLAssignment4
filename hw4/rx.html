@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en_US">
+  <head>
+    <meta charset="utf-8"/>
+    <title>Homework 4: a Reactive Library</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script> 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mocha/2.4.5/mocha.min.js"/></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mocha/2.4.5/mocha.min.css"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chai/3.5.0/chai.min.js"/></script>
+  </head>
+  <body>
+    <h1>Homework 4: a Reactive Library</h1>
+
+    <p>
+      This page is a test harness for Homework 2. The graders will use
+      Chrome 49 (not Chromium) to test your assignments; you will want
+      every test on this page to pass, as well as several hidden tests
+      that the graders will also run.
+    </p>
+    
+    <p>The graders will also examine your code. Do not make any
+    changes to this page except to add JS libraries.</p>
+    
+    <div id="mocha"></div>
+    <div id="fixtures"></div>
+
+    <div id="tests">
+      <p>Timer: It is now <span id="time">[make this a timer]</span></p>
+      <p>Button: <button id="button">Click me!</button> Count: <span id="clicks">[count clicks]</span></p>
+      <p>Move mouse below. Position: <span id="mouseposition">[mouse position here]</span></p>
+      <div id="mousemove" style="width: 100px; height: 100px; border: 1px solid black;"></div>
+      <p>Search Seattle Fire 911 calls: <input id="firesearch" placeholder="Search here"/></p>
+      <ul id="fireevents">
+      </ul>
+      <p>Search Wikipedia: <input id="wikipediasearch" placeholder="Search here"/></p>
+      <ul id="wikipediasuggestions">
+      </ul>
+    </div>
+
+    <script>
+      $(function(data) {
+          window.raw_data = data.data;
+          mocha.run();
+      });
+    </script>
+    <script src="rx.js"></script>
+    <script src="test.js"></script>
+  </body>
+</html>
