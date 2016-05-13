@@ -136,6 +136,23 @@ Stream.prototype.dom = function(element, eventname) {
     });
 };
 
+// dom
+Stream.prototype.throttle = function(N) {
+    var throttledStream = this;
+    var s = new Stream();
+    s.allowPush = true;
+    setInterval(function(){
+        s.allowPush = true;
+    }, N);
+    throttledStream.subscribe(function(val){
+        if(s.allowPush){
+            s.allowPush = false;
+            s._push(val);
+        }
+    });
+    return s;
+};
+
 var FIRE911URL = "https://data.seattle.gov/views/kzjm-xkqj/rows.json?accessType=WEBSITE&method=getByIds&asHashes=true&start=0&length=10&meta=false&$order=:id";
 
 window.WIKICALLBACKS = {}
@@ -178,5 +195,13 @@ $(function() {
         clicksSpan.text(clickCount);
     });
 
-    
+    // Throttled update
+    var mousePositionSpan = $("#mouseposition");
+    var mouseMoveDiv = document.getElementById("mousemove");
+    var mouseMoveStream = new Stream();
+    mouseMoveStream.dom(mouseMoveDiv, "mousemove");
+    var throttledMouseMove = mouseMoveStream.throttle(1000);
+    throttledMouseMove.subscribe(function(e){
+        mousePositionSpan.text("X:" + e.pageX + " Y: " + e.pageY);
+    });
 });
