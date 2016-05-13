@@ -5,14 +5,21 @@ function Stream() {
 
 Stream.prototype.subscribe = function(func) {
     this.callbacks.push(func);
-}
+};
 
 Stream.prototype._push = function(val) {
     for(var i = 0; i < this.callbacks.length; i++){
         var callback = this.callbacks[i];
         callback(val);
     }
-}
+};
+
+Stream.prototype._push_many = function(arr) {
+    for(var i = 0; i < arr.length; i++){
+        var val = arr[i];
+        this._push(val);
+    }
+};
 
 // PART 1 HERE
 
