@@ -128,6 +128,14 @@ Stream.prototype.timer = function(N) {
     }, N);
 };
 
+// dom
+Stream.prototype.dom = function(element, eventname) {
+    var s = this;
+    element.addEventListener(eventname, function(e){
+        s._push(e);
+    });
+};
+
 var FIRE911URL = "https://data.seattle.gov/views/kzjm-xkqj/rows.json?accessType=WEBSITE&method=getByIds&asHashes=true&start=0&length=10&meta=false&$order=:id";
 
 window.WIKICALLBACKS = {}
@@ -152,9 +160,23 @@ var refreshMs = 150;
 $(function() {
     // PART 2 INTERACTIONS HERE
 
-    var out = new Stream();
-    out.timer(refreshMs);
-    out.subscribe(function(val){
+    // Timer
+    var timerStream = new Stream();
+    timerStream.timer(refreshMs);
+    timerStream.subscribe(function(val){
         $("#time").text(val);
     });
+
+    // Click count
+    var clicksSpan = $("#clicks");
+    var button = document.getElementById("button");
+    var clickStream = new Stream();
+    clickStream.dom(button, "click");
+    var clickCount = 0;
+    clickStream.subscribe(function(e){
+        clickCount++;
+        clicksSpan.text(clickCount);
+    });
+
+    
 });
