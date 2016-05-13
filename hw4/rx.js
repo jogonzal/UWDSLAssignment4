@@ -99,17 +99,16 @@ Stream.prototype.zip = function(B, f) {
     var s = new Stream();
     var A = this;
     A.subscribe(function(val){
-        A.latest = val;
-        if (A.latest != null && B.latest != null){
-            var mappedVal = f(A.latest, B.latest);
+        A.lastValue = val;
+        if (A.lastValue != null && B.lastValue != null){
+            var mappedVal = f(A.lastValue, B.lastValue);
             s._push(mappedVal);
         }
     });
     B.subscribe(function(val){
-        B.latest = val;
-        var mappedVal = f(A.latest, B.latest);
-        if (A.latest != null && B.latest != null){
-            var mappedVal = f(A.latest, B.latest);
+        B.lastValue = val;
+        if (A.lastValue != null && B.lastValue != null){
+            var mappedVal = f(A.lastValue, B.lastValue);
             s._push(mappedVal);
         }
     });
@@ -143,11 +142,18 @@ Stream.prototype.throttle = function(N) {
     s.allowPush = true;
     setInterval(function(){
         s.allowPush = true;
+        if (s.pendingPush){
+            s._push(s.pendingPush);
+            s.pendingPush = null;
+            s.allowPush = false;
+        }
     }, N);
     throttledStream.subscribe(function(val){
         if(s.allowPush){
             s.allowPush = false;
             s._push(val);
+        } else {
+            s.pendingPush = val;
         }
     });
     return s;
@@ -159,6 +165,21 @@ Stream.prototype.url = function(url) {
     $.get(url, function(parsedJson){
         s._push(parsedJson);
     }, "json");
+};
+
+// latest
+Stream.prototype.latest = function() {
+    var s = new Stream();
+    s.latestStream = null;
+    this.subscribe(function(newStream){
+        s.latestStream = newStream;
+        newStream.subscribe(function(val){
+            if (s.latestStream == newStream){
+                s._push(val);
+            }
+        });
+    });
+    return s;
 };
 
 var FIRE911URL = "https://data.seattle.gov/views/kzjm-xkqj/rows.json?accessType=WEBSITE&method=getByIds&asHashes=true&start=0&length=10&meta=false&$order=:id";
@@ -181,6 +202,7 @@ function WIKIPEDIAGET(s, cb) {
 }
 
 var refreshMs = 150;
+var wikipediaThrottle = 100;
 
 $(function() {
     // PART 2 INTERACTIONS HERE
@@ -222,5 +244,34 @@ $(function() {
     });
     addressStream.subscribe(function(address){
         $("#fireevents").append($("<li></li>").text(address));
+    });
+
+    // Wikipedia throttled search
+    var wikipediaInputText = document.getElementById("wikipediasearch");
+    var textChangedStream = new Stream();
+    textChangedStream.dom(wikipediaInputText, "keyup");
+    var throttledTextChangedStream = textChangedStream.throttle(wikipediaThrottle);
+
+    // This will be a stream of streams - we only want latest from there
+    var searchStreams = new Stream();
+
+    // add a stream to searchstreams on every key press
+    throttledTextChangedStream.subscribe(function(e){
+        // create a new stream for each searching
+        var searchStream = new Stream();
+        var searchTerm = wikipediaInputText.value;
+        WIKIPEDIAGET(searchTerm, function(titles){
+            searchStream._push(titles);
+        });
+        searchStreams._push(searchStream);
+    });
+
+    var titlesStream = searchStreams.latest();
+    titlesStream.subscribe(function(titles){
+        $("#wikipediasuggestions").empty();
+        for(var i = 0; i < titles.length; i++){
+            var title = titles[i];
+            $("#wikipediasuggestions").append($("<li></li>").text(title));
+        }
     });
 });
