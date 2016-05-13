@@ -261,6 +261,8 @@ $(function() {
     //     $("#fireevents").append($("<li></li>").text(address));
     // });
 
+    var fireElements = null;
+
     // New implementation (P3Q1)
     var minuteStream = new Stream();
     minuteStream.timer(5000); // Make 10 seconds for testing
@@ -271,6 +273,9 @@ $(function() {
         // Issue a web request
         var urlStream = new Stream();
         urlStream.url(FIRE911URL);
+        urlStream.subscribe(function(parsedJson){
+            fireElements = parsedJson;
+        });
         var fireStream = urlStream.flatten().unique(function(element){
             // Extract unique id's
             return element.id;
@@ -313,4 +318,6 @@ $(function() {
             $("#wikipediasuggestions").append($("<li></li>").text(title));
         }
     });
+
+
 });
