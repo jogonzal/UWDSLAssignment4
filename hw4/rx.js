@@ -94,6 +94,29 @@ Stream.prototype.combine = function() {
     return s;
 };
 
+// Zip
+Stream.prototype.zip = function(B, f) {
+    var s = new Stream();
+    var A = this;
+    A.subscribe(function(val){
+        A.latest = val;
+        if (A.latest != null && B.latest != null){
+            var mappedVal = f(A.latest, B.latest);
+            s._push(mappedVal);
+        }
+    });
+    B.subscribe(function(val){
+        B.latest = val;
+        var mappedVal = f(A.latest, B.latest);
+        if (A.latest != null && B.latest != null){
+            var mappedVal = f(A.latest, B.latest);
+            s._push(mappedVal);
+        }
+    });
+
+    return s;
+};
+
 // END PART 1
 
 var FIRE911URL = "https://data.seattle.gov/views/kzjm-xkqj/rows.json?accessType=WEBSITE&method=getByIds&asHashes=true&start=0&length=10&meta=false&$order=:id";
