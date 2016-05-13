@@ -261,7 +261,7 @@ $(function() {
     //     $("#fireevents").append($("<li></li>").text(address));
     // });
 
-    var fireElements = null;
+    var searchInputElement = document.getElementById("firesearch");
 
     // New implementation (P3Q1)
     var minuteStream = new Stream();
@@ -273,20 +273,32 @@ $(function() {
         // Issue a web request
         var urlStream = new Stream();
         urlStream.url(FIRE911URL);
-        urlStream.subscribe(function(parsedJson){
-            fireElements = parsedJson;
-        });
-        var fireStream = urlStream.flatten().unique(function(element){
+
+        var individualAddressStream = urlStream.flatten();
+        var fireStream = individualAddressStream.unique(function(element){
             // Extract unique id's
             return element.id;
         }).map(function(parsedJson){
             // Extract only the address
             return parsedJson["3479077"];
+        }).filter(function(address){
+            if (searchInputElement.value != ""){
+                return address.indexOf(searchInputElement.value) != -1;
+            }
+            return true;
         });
         fireStream.subscribe(function(address){
             $("#fireevents").append($("<li></li>").text(address));
         });
     });
+
+    var searchStream = new Stream();
+    searchStream.dom(searchInputElement, "input");
+    var mappedStream = searchStream.subscribe(function(e){
+        // Simulate a metronome fire
+        minuteStream._push(new Date());
+    });
+
     // Artificially start the first iteration
     minuteStream._push(new Date());
 
