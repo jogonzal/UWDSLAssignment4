@@ -44,6 +44,30 @@ Stream.prototype.map = function(map) {
     return s;
 };
 
+// Filter
+Stream.prototype.filter = function(filter) {
+    var s = new Stream();
+    this.subscribe(function(val){
+        var res = filter(val);
+        if (res){
+            s._push(val);
+        }
+    });
+    return s;
+};
+
+// Flatten
+Stream.prototype.flatten = function(filter) {
+    var s = new Stream();
+    this.subscribe(function(arr){
+        for(var i = 0; i < arr.length; i++){
+            var val = arr[i];
+            s._push(val);
+        }
+    });
+    return s;
+};
+
 // PART 1 HERE
 
 var FIRE911URL = "https://data.seattle.gov/views/kzjm-xkqj/rows.json?accessType=WEBSITE&method=getByIds&asHashes=true&start=0&length=10&meta=false&$order=:id";
