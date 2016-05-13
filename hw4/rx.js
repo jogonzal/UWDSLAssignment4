@@ -153,6 +153,14 @@ Stream.prototype.throttle = function(N) {
     return s;
 };
 
+// url
+Stream.prototype.url = function(url) {
+    var s = this;
+    $.get(url, function(parsedJson){
+        s._push(parsedJson);
+    }, "json");
+};
+
 var FIRE911URL = "https://data.seattle.gov/views/kzjm-xkqj/rows.json?accessType=WEBSITE&method=getByIds&asHashes=true&start=0&length=10&meta=false&$order=:id";
 
 window.WIKICALLBACKS = {}
@@ -203,5 +211,16 @@ $(function() {
     var throttledMouseMove = mouseMoveStream.throttle(1000);
     throttledMouseMove.subscribe(function(e){
         mousePositionSpan.text("X:" + e.pageX + " Y: " + e.pageY);
+    });
+
+    // Url
+    var urlStream = new Stream();
+    urlStream.url(FIRE911URL);
+    var addressStream = urlStream.flatten().map(function(parsedJson){
+        // Extract only the address
+        return parsedJson["3479077"]
+    });
+    addressStream.subscribe(function(address){
+        $("#fireevents").append($("<li></li>").text(address));
     });
 });
