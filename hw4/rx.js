@@ -3,6 +3,17 @@ function Stream() {
     this.callbacks = []
 }
 
+Stream.prototype.subscribe = function(func) {
+    this.callbacks.push(func);
+}
+
+Stream.prototype._push = function(val) {
+    for(var i = 0; i < this.callbacks.length; i++){
+        var callback = this.callbacks[i];
+        callback(val);
+    }
+}
+
 // PART 1 HERE
 
 var FIRE911URL = "https://data.seattle.gov/views/kzjm-xkqj/rows.json?accessType=WEBSITE&method=getByIds&asHashes=true&start=0&length=10&meta=false&$order=:id";
