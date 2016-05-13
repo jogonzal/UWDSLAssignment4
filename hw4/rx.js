@@ -21,6 +21,19 @@ Stream.prototype._push_many = function(arr) {
     }
 };
 
+// First
+Stream.prototype.first = function() {
+    var s = new Stream();
+    s.alreadyPushed = false;
+    this.subscribe(function(val){
+        if (!s.alreadyPushed){
+            s.alreadyPushed = true;
+            s._push(val);
+        }
+    });
+    return s;
+};
+
 // PART 1 HERE
 
 var FIRE911URL = "https://data.seattle.gov/views/kzjm-xkqj/rows.json?accessType=WEBSITE&method=getByIds&asHashes=true&start=0&length=10&meta=false&$order=:id";
