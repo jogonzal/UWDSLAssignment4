@@ -71,7 +71,17 @@ Stream.prototype.flatten = function() {
 };
 
 // Join
-
+Stream.prototype.join = function(s2) {
+    var s1 = this;
+    var s = new Stream();
+    s1.subscribe(function(val){
+        s._push(val);
+    });
+    s2.subscribe(function(val){
+        s._push(val);
+    });
+    return s;
+};
 
 // END PART 1
 
