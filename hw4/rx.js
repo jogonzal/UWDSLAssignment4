@@ -147,11 +147,13 @@ function WIKIPEDIAGET(s, cb) {
     })
 }
 
+var refreshMs = 150;
+
 $(function() {
     // PART 2 INTERACTIONS HERE
 
     var out = new Stream();
-    out.timer(150);
+    out.timer(refreshMs);
     out.subscribe(function(val){
         $("#time").text(val);
     });
