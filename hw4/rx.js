@@ -119,6 +119,15 @@ Stream.prototype.zip = function(B, f) {
 
 // END PART 1
 
+// timer
+Stream.prototype.timer = function(N) {
+    var s = this;
+    setInterval(function(){
+        var currentTime = new Date();
+        s._push(currentTime);
+    }, N);
+};
+
 var FIRE911URL = "https://data.seattle.gov/views/kzjm-xkqj/rows.json?accessType=WEBSITE&method=getByIds&asHashes=true&start=0&length=10&meta=false&$order=:id";
 
 window.WIKICALLBACKS = {}
@@ -141,4 +150,9 @@ function WIKIPEDIAGET(s, cb) {
 $(function() {
     // PART 2 INTERACTIONS HERE
 
+    var out = new Stream();
+    out.timer(150);
+    out.subscribe(function(val){
+        $("#time").text(val);
+    });
 });
