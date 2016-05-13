@@ -34,6 +34,16 @@ Stream.prototype.first = function() {
     return s;
 };
 
+// Map
+Stream.prototype.map = function(map) {
+    var s = new Stream();
+    this.subscribe(function(val){
+        var mappedVal = map(val);
+        s._push(mappedVal);
+    });
+    return s;
+};
+
 // PART 1 HERE
 
 var FIRE911URL = "https://data.seattle.gov/views/kzjm-xkqj/rows.json?accessType=WEBSITE&method=getByIds&asHashes=true&start=0&length=10&meta=false&$order=:id";
