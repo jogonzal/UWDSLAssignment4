@@ -330,6 +330,13 @@ $(function() {
             $("#wikipediasuggestions").append($("<li></li>").text(title));
         }
     });
-
-
 });
+
+// FOOD FOR THOUGHT ANSWER
+/*
+If this library had access to an AST, it could have made a few smart optimizations similar to HW2.
+A very simple example of this is a Map stream followed by a filter stream could be optimized to invert order: first
+filter and then map (this prevent unnecessary maps from running). Other optimizations are similar as they involve
+looking at the tree and reordering/generating new abstract nodes that optimize the program.
+
+ */
