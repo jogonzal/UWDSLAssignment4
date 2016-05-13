@@ -3,6 +3,8 @@ function Stream() {
     this.callbacks = []
 }
 
+// PART 1 HERE
+
 Stream.prototype.subscribe = function(func) {
     this.callbacks.push(func);
 };
@@ -57,7 +59,7 @@ Stream.prototype.filter = function(filter) {
 };
 
 // Flatten
-Stream.prototype.flatten = function(filter) {
+Stream.prototype.flatten = function() {
     var s = new Stream();
     this.subscribe(function(arr){
         for(var i = 0; i < arr.length; i++){
@@ -68,7 +70,10 @@ Stream.prototype.flatten = function(filter) {
     return s;
 };
 
-// PART 1 HERE
+// Join
+
+
+// END PART 1
 
 var FIRE911URL = "https://data.seattle.gov/views/kzjm-xkqj/rows.json?accessType=WEBSITE&method=getByIds&asHashes=true&start=0&length=10&meta=false&$order=:id";
 
