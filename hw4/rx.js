@@ -83,6 +83,17 @@ Stream.prototype.join = function(s2) {
     return s;
 };
 
+// Combine
+Stream.prototype.combine = function() {
+    var s = new Stream();
+    this.subscribe(function(newStream){
+        newStream.subscribe(function(val){
+            s._push(val);
+        });
+    });
+    return s;
+};
+
 // END PART 1
 
 var FIRE911URL = "https://data.seattle.gov/views/kzjm-xkqj/rows.json?accessType=WEBSITE&method=getByIds&asHashes=true&start=0&length=10&meta=false&$order=:id";
