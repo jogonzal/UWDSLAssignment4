@@ -249,7 +249,7 @@ $(function() {
         mousePositionSpan.text("X:" + e.pageX + " Y: " + e.pageY);
     });
 
-    // Old implementation
+    // Old implementation - commented out
     // Url
     // var urlStream = new Stream();
     // urlStream.url(FIRE911URL);
@@ -261,64 +261,63 @@ $(function() {
     //     $("#fireevents").append($("<li></li>").text(address));
     // });
 
-    var searchInputElement = document.getElementById("firesearch");
+    // var searchInputElement = document.getElementById("firesearch");
 
-    // New implementation (P3Q1)
-    var minuteStream = new Stream();
-    minuteStream.timer(60000); // Reduce time here for testing
-    var listOfAddress = [];
-    var uiNotificationStream = new Stream();
-    uiNotificationStream.subscribe(function(val){
-        // Clear the list
-        $("#fireevents").empty();
-        for(var i = 0; i < listOfAddress.length; i++){
-            var address = listOfAddress[i];
-            var shouldInclude = true;
-            if (searchInputElement.value != ""){
-                shouldInclude = address.indexOf(searchInputElement.value) != -1;
-            }
-            if (shouldInclude){
-                $("#fireevents").append($("<li></li>").text(address));
-            }
-        }
-    });
-
-    var uniquenessStream = new Stream();
-    uniquenessStream.unique(function(element){
-        // Extract unique id's - will never repeat them
-        return element.id;
-    }).map(function(parsedJson){
-        // Extract only the address
-        return parsedJson["3479077"];
-    }).subscribe(function(address){
-        listOfAddress.push(address);
-        // Notify UI update
-        uiNotificationStream._push(new Date());
-    });
-
-    minuteStream.subscribe(function (currentTime){
-        // Issue a web request
-        listOfAddress = [];
-        var urlStream = new Stream();
-        urlStream.url(FIRE911URL);
-
-        var individualAddressStream = urlStream.flatten();
-        individualAddressStream.subscribe(function(val){
-            uniquenessStream._push(val);
-            uiNotificationStream._push(new Date());
-        });
-    });
-
-    var searchStream = new Stream();
-    searchStream.dom(searchInputElement, "input");
-    var mappedStream = searchStream.subscribe(function(e){
-        // Notify UI update
-        uiNotificationStream._push(new Date());
-    });
-
-    // Artificially start the first iteration
-    minuteStream._push(new Date());
-
+    // New implementation (P3) - commented out since optimized version is running
+    // var minuteStream = new Stream();
+    // minuteStream.timer(60000); // Reduce time here for testing
+    // var listOfAddress = [];
+    // var uiNotificationStream = new Stream();
+    // uiNotificationStream.subscribe(function(val){
+    //     // Clear the list and display all the elements
+    //     $("#fireevents").empty();
+    //     for(var i = 0; i < listOfAddress.length; i++){
+    //         var address = listOfAddress[i];
+    //         var shouldInclude = true;
+    //         if (searchInputElement.value != ""){
+    //             shouldInclude = address.indexOf(searchInputElement.value) != -1;
+    //         }
+    //         if (shouldInclude){
+    //             $("#fireevents").append($("<li></li>").text(address));
+    //         }
+    //     }
+    // });
+    //
+    // var uniquenessStream = new Stream();
+    // uniquenessStream.unique(function(element){
+    //     // Extract unique id's - will never repeat them
+    //     return element.id;
+    // }).map(function(parsedJson){
+    //     // Extract only the address
+    //     return parsedJson["3479077"];
+    // }).subscribe(function(address){
+    //     listOfAddress.push(address);
+    //     // Notify UI update
+    //     uiNotificationStream._push(new Date());
+    // });
+    //
+    // minuteStream.subscribe(function (currentTime){
+    //     // Issue a web request
+    //     listOfAddress = [];
+    //     var urlStream = new Stream();
+    //     urlStream.url(FIRE911URL);
+    //
+    //     var individualAddressStream = urlStream.flatten();
+    //     individualAddressStream.subscribe(function(val){
+    //         uniquenessStream._push(val);
+    //         uiNotificationStream._push(new Date());
+    //     });
+    // });
+    //
+    // var searchStream = new Stream();
+    // searchStream.dom(searchInputElement, "input");
+    // var mappedStream = searchStream.subscribe(function(e){
+    //     // Notify UI update
+    //     uiNotificationStream._push(new Date());
+    // });
+    //
+    // // Artificially start the first iteration
+    // minuteStream._push(new Date());
 
 
     // Wikipedia throttled search
@@ -349,13 +348,83 @@ $(function() {
             $("#wikipediasuggestions").append($("<li></li>").text(title));
         }
     });
-});
 
 // FOOD FOR THOUGHT ANSWER
 /*
-If this library had access to an AST, it could have made a few smart optimizations similar to HW2.
-A very simple example of this is a Map stream followed by a filter stream could be optimized to invert order: first
-filter and then map (this prevent unnecessary maps from running). Other optimizations are similar as they involve
-looking at the tree and reordering/generating new abstract nodes that optimize the program.
-
+If this library had access to an AST, it could have made a few smart optimizations similar to HW2, since it would be
+able to analyze the tree before running - it would be able to replace it with a functionally equivalent but more efficient
+tree.
+An example of the optimizations that can be done is on array processing - when we see a:
+    .uri() // Returns an array
+    .flatten().unique().map().filter()...
+This means that an array is being iterated on multiple times to be filtered, mapped, and unique'd.
+A possible optimization here is to replace some of those nodes with an internal node type. For example,
+    .flatten().map(mappingFunc).filter(filteringFunc)
+    .flattenWithMapAndFilter(mappingFunc, filteringFunc)
+Subscribing to the stream that is flattened and implementing this in a for loop would be equivalent. That is the path
+I chose for this HW below.
  */
+ var searchInputElement = document.getElementById("firesearch")
+
+ var minuteStream = new Stream();
+ minuteStream.timer(5000); // Reduce time here for testing
+ var fullList = null;
+ var uiNotificationStream = new Stream();
+ uiNotificationStream.subscribe(function(val){
+     // flattenWithMapAndFilter Optimization: map and filter happen here
+     $("#fireevents").empty();
+     if (fullList == null){
+         return;
+     }
+     for(var i = 0; i < fullList.length; i++){
+         var address = fullList[i];
+         address = address["3479077"];
+
+         var shouldInclude = true;
+         if (searchInputElement.value != ""){
+             shouldInclude = address.indexOf(searchInputElement.value) != -1;
+         }
+         if (shouldInclude){
+             $("#fireevents").append($("<li></li>").text(address));
+         }
+     }
+ });
+ var uniquenessVar = {};
+ var uniquenessStream = new Stream();
+ uniquenessStream.subscribe(function(arr){
+     // Extract unique id's - will never repeat them
+     var res = [];
+     for(var i = 0; i < arr.length; i++){
+         var elem = arr[i];
+         var shouldInclude =  uniquenessVar[elem.id] == null;
+         uniquenessVar[elem.id] = elem;
+         if (shouldInclude){
+             res.push(elem);
+         }
+     }
+     fullList = res;
+   uiNotificationStream._push(res);
+ });
+
+ minuteStream.subscribe(function (currentTime){
+     // Issue a web request
+     listOfAddress = [];
+     var urlStream = new Stream();
+     urlStream.url(FIRE911URL);
+
+     urlStream.subscribe(function(val){
+         uniquenessStream._push(val);
+     });
+ });
+
+ var searchStream = new Stream();
+ searchStream.dom(searchInputElement, "input");
+ var mappedStream = searchStream.subscribe(function(e){
+     // Notify UI update
+     uiNotificationStream._push(fullList);
+ });
+
+ // Artificially start the first iteration
+ minuteStream._push(fullList);
+
+});
