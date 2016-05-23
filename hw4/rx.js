@@ -135,7 +135,7 @@ Stream.prototype.dom = function(element, eventname) {
     });
 };
 
-// dom
+// throttle
 Stream.prototype.throttle = function(N) {
     var throttledStream = this;
     var s = new Stream();
@@ -265,42 +265,61 @@ $(function() {
 
     // New implementation (P3Q1)
     var minuteStream = new Stream();
-    minuteStream.timer(5000); // Make 10 seconds for testing
-    minuteStream.subscribe(function (currentTime){
+    minuteStream.timer(60000); // Reduce time here for testing
+    var listOfAddress = [];
+    var uiNotificationStream = new Stream();
+    uiNotificationStream.subscribe(function(val){
         // Clear the list
         $("#fireevents").empty();
+        for(var i = 0; i < listOfAddress.length; i++){
+            var address = listOfAddress[i];
+            var shouldInclude = true;
+            if (searchInputElement.value != ""){
+                shouldInclude = address.indexOf(searchInputElement.value) != -1;
+            }
+            if (shouldInclude){
+                $("#fireevents").append($("<li></li>").text(address));
+            }
+        }
+    });
 
+    var uniquenessStream = new Stream();
+    uniquenessStream.unique(function(element){
+        // Extract unique id's - will never repeat them
+        return element.id;
+    }).map(function(parsedJson){
+        // Extract only the address
+        return parsedJson["3479077"];
+    }).subscribe(function(address){
+        listOfAddress.push(address);
+        // Notify UI update
+        uiNotificationStream._push(new Date());
+    });
+
+    minuteStream.subscribe(function (currentTime){
         // Issue a web request
+        listOfAddress = [];
         var urlStream = new Stream();
         urlStream.url(FIRE911URL);
 
         var individualAddressStream = urlStream.flatten();
-        var fireStream = individualAddressStream.unique(function(element){
-            // Extract unique id's
-            return element.id;
-        }).map(function(parsedJson){
-            // Extract only the address
-            return parsedJson["3479077"];
-        }).filter(function(address){
-            if (searchInputElement.value != ""){
-                return address.indexOf(searchInputElement.value) != -1;
-            }
-            return true;
-        });
-        fireStream.subscribe(function(address){
-            $("#fireevents").append($("<li></li>").text(address));
+        individualAddressStream.subscribe(function(val){
+            uniquenessStream._push(val);
+            uiNotificationStream._push(new Date());
         });
     });
 
     var searchStream = new Stream();
     searchStream.dom(searchInputElement, "input");
     var mappedStream = searchStream.subscribe(function(e){
-        // Simulate a metronome fire
-        minuteStream._push(new Date());
+        // Notify UI update
+        uiNotificationStream._push(new Date());
     });
 
     // Artificially start the first iteration
     minuteStream._push(new Date());
+
+
 
     // Wikipedia throttled search
     var wikipediaInputText = document.getElementById("wikipediasearch");
